@@ -473,3 +473,36 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
+手工修改记录：
+
+71、72 页：编号 60 和编号 61，是同一个单词的两种不同的变位形式。手工增加了序号。
+
+感觉可能是字体原因，某些特定的字母组合会解析出奇怪的自定义符号。
+手工校对太麻烦了，不如用爬虫爬网站来校对，可以更有保障，比解析 PDF 靠谱。
+
+正在处理第 13 页...
+infinitif_present: être aimé(e, s, es), and verbe: être aimé.
+无需处理
+
+正在处理第 14 页...
+infinitif_present: s’aimer, and verbe: .
+无需处理
+
+正在处理第 39 页...
+infinitif_present: ﬁnir, and verbe: nir.
+需要处理
+
+正在处理第 88 页...
+infinitif_present: , and verbe: dire.
+需要处理
+
+正在处理第 93 页...
+infinitif_present: sure, and verbe: sure.
+需要处理
+
+正在处理第 94 页...
+infinitif_present: conﬁre, and verbe: conre.
+需要处理
+"""
