@@ -58,10 +58,11 @@ class FrenchVerbExtractor:
             # INFINITIF
             'infinitif_present', 'infinitif_passe',
             # PARTICIPE
-            'participe_present', 'participe_passe'
+            'participe_present', 'participe_passe', 'participe_passe_compose',
+            # OTHERS
+            'notes', 'labels',
         ]
 
-        # finished
         self.pdf_position = {
             "indicatif_present": (40, 145, 180, 285),
             "indicatif_passe_compose": (190, 145, 340, 285),
@@ -73,19 +74,23 @@ class FrenchVerbExtractor:
             "indicatif_futur_anterieur": (190, 615, 340, 760),
             "conditionnel_present": (40, 770, 180, 920),
             "conditionnel_passe": (190, 770, 340, 920),
-            "subjonctif_present": (350, 145, 490, 285),
+            "subjonctif_present": (350, 145, 500, 285),
             "subjonctif_passe": (500, 145, 700, 285),
-            "subjonctif_imparfait": (350, 305, 490, 440),
+            "subjonctif_imparfait": (350, 305, 500, 440),
             "subjonctif_plus_que_parfait": (500, 305, 700, 440),
-            "imperatif_present": (350, 455, 490, 560),
-            "imperatif_passe": (500, 455, 700, 560),
-            "infinitif_present": (350, 575, 490, 640),
-            "infinitif_passe": (500, 575, 700, 640),
-            "participe_present": (350, 655, 490, 740),
-            "participe_passe": (500, 655, 700, 740),
+            "imperatif_present_2s": (350, 505, 500, 520),
+            "imperatif_present_1p": (350, 524, 500, 539),
+            "imperatif_present_2p": (350, 542, 500, 560),
+            "imperatif_passe_2s": (500, 505, 700, 520),
+            "imperatif_passe_1p": (500, 524, 700, 539),
+            "imperatif_passe_2p": (500, 542, 700, 560),
+            "infinitif_present": (350, 623, 500, 640),
+            "infinitif_passe": (500, 623, 700, 640),
+            "participe_present": (350, 705, 500, 722),
+            "participe_passe": (500, 705, 700, 722),
+            "participe_passe_compose": (500, 725, 700, 740),
         }
 
-    # finished
     def combine_line(self, current_line, elements):
         # 每一行元素先按左端横坐标排序
         current_line.sort(key = lambda x: (x.bbox[0]))
@@ -123,7 +128,6 @@ class FrenchVerbExtractor:
         if temp_elem.text != "":
             elements.append(deepcopy(temp_elem))
 
-    # finished
     def extract_text_elements(self, page) -> List[TextElement]:
         """提取页面所有文字元素"""
         elements = []
@@ -148,10 +152,9 @@ class FrenchVerbExtractor:
         if len(current_line) > 0:
             self.combine_line(current_line, elements)
 
-        print(elements)
+        # print(elements)
         return elements
 
-    # doing
     def extract_verb_info(self, page_num: int) -> Optional[Dict]:
         """从单页提取动词信息"""
         page = self.doc[page_num]
@@ -175,154 +178,103 @@ class FrenchVerbExtractor:
         # 4. 提取变位表格
         conjugations = self.extract_conjugations(elements)
         verb_info.update(conjugations)
+        if conjugations['infinitif_present'] != verb_info['verbe']:
+            print(f"infinitif_present: {conjugations['infinitif_present']}, and verbe: {verb_info['verbe']}.")
+            if verb_info['verbe'] == "":
+                verb_info['verbe'] = conjugations['infinitif_present']
+
+        # 5. 笔记和标签创建
+        verb_info['notes'] = ""
+        verb_info['labels'] = ""
 
         return verb_info
 
-    # finished
     def extract_indice(self, elements: List[TextElement]) -> str:
         """提取左上角绿色圆圈中的数字"""
-        for element in elements[:10]:  # 通常在前几个元素中
-            if element.text.isdigit() and len(element.text) <= 3:
+        for element in elements:
+            if (element.text.isdigit() and
+                len(element.text) <= 3 and
+                element.size > 20):
                 return element.text
         return ""
 
-    # finished
     def extract_verb_name(self, elements: List[TextElement]) -> str:
-        """提取动词名称（通常是最大的黑色文字）"""
-        candidates = []
+        """提取动词名称"""
         for element in elements:
-            if (element.size >= 20 and  # 字体较大
-                len(element.text) > 3 and  # 长度合理
-                element.text.isalpha()):  # 只包含字母
-                candidates.append((element.size, element.text))
-
-        if candidates:
-            candidates.sort(reverse=True)
-            return candidates[0][1]
+            if (element.size >= 30 and
+                len(element.text) > 3 and
+                element.bbox[1] > 25 and
+                element.bbox[3] < 75):
+                return element.text
         return ""
 
-    # todo
     def extract_caracterisation(self, elements: List[TextElement]) -> str:
         """提取动词特征描述"""
-        verb_name = self.extract_verb_name(elements)
+        blocks = []
+        for element in elements:
+            if (element.size > 14 and element.size < 17 and
+                element.bbox[1] > 75 and element.bbox[3] < 120 and
+                element.bbox[2] < 450):
+                if element.text.strip() == "":
+                    blocks.append("|")
+                else:
+                    blocks.append(element.text.strip())
+        return " ".join(blocks)
 
-        for i, element in enumerate(elements):
-            if element.text == verb_name and i + 1 < len(elements):
-                # 查找动词名称下方的描述
-                next_element = elements[i + 1]
-                if next_element.bbox[1] > element.bbox[1]:  # 在下方
-                    return next_element.text
+    def decide_tense_by_position(self, element) -> str:
+        for tense, position in self.pdf_position.items():
+            if (element.bbox[0] > position[0] and
+                element.bbox[1] > position[1] and
+                element.bbox[2] < position[2] and
+                element.bbox[3] < position[3]):
+                return tense
         return ""
 
-    # todo：按照 self.pdf_position 来提取. for 循环遍历所有的 elements，判断位置
     def extract_conjugations(self, elements: List[TextElement]) -> Dict:
         """提取所有变位"""
-        conjugations = {header: "" for header in self.csv_headers[3:]}  # 跳过前3个基本信息字段
+        conjugations = {}
+        for header in self.csv_headers[3: -2]:
+            conjugations[header] = ""
+            conjugations[f"{header}_audio"] = ""
 
-        # 定义各个时态的关键词
-        tense_keywords = {
-            'PRÉSENT': 'present',
-            'PASSÉ COMPOSÉ': 'passe_compose',
-            'IMPARFAIT': 'imparfait',
-            'PLUS-QUE-PARFAIT': 'plus_que_parfait',
-            'PASSÉ SIMPLE': 'passe_simple',
-            'PASSÉ ANTÉRIEUR': 'passe_anterieur',
-            'FUTUR SIMPLE': 'futur_simple',
-            'FUTUR ANTÉRIEUR': 'futur_anterieur',
-            'CONDITIONNEL PRÉSENT': 'conditionnel_present',
-            'CONDITIONNEL PASSÉ': 'conditionnel_passe'
-        }
+        for element in elements:
+            tense = self.decide_tense_by_position(element)
+            if tense == "":
+                continue
 
-        # 定义人称模式
-        person_patterns = [
-            (r'^je\s+', '1s'), (r'^j\'', '1s'),
-            (r'^tu\s+', '2s'),
-            (r'^il/elle\s+', '3s'), (r'^qu\'il/elle\s+', '3s'),
-            (r'^nous\s+', '1p'), (r'^que nous\s+', '1p'),
-            (r'^vous\s+', '2p'), (r'^que vous\s+', '2p'),
-            (r'^ils/elles\s+', '3p'), (r'^qu\'ils/elles\s+', '3p'),
-            (r'^que je\s+', '1s'), (r'^que j\'', '1s'),
-            (r'^que tu\s+', '2s')
-        ]
+            non_person_tenses = [
+                "imperatif_present_2s", "imperatif_present_1p", "imperatif_present_2p",
+                "imperatif_passe_2s",   "imperatif_passe_1p",   "imperatif_passe_2p",
+                "infinitif_present",    "infinitif_passe",      "participe_present",
+                "participe_passe",      "participe_passe_compose",
+            ]
+            if tense in non_person_tenses:
+                conjugations[tense] = element.text
+                continue
 
-        current_mode = ""
-        current_tense = ""
-
-        i = 0
-        while i < len(elements):
-            element = elements[i]
-            text = element.text.upper()
-
-            # 识别语态
-            if "INDICATIF" in text:
-                current_mode = "indicatif"
-            elif "SUBJONCTIF" in text:
-                current_mode = "subjonctif"
-            elif "IMPÉRATIF" in text:
-                current_mode = "imperatif"
-            elif "INFINITIF" in text:
-                current_mode = "infinitif"
-            elif "PARTICIPE" in text:
-                current_mode = "participe"
-
-            # 识别时态
-            for keyword, tense_key in tense_keywords.items():
-                if keyword in text:
-                    current_tense = tense_key
+            person_patterns = [
+                ("je",        "1s"), ("j’",   "1s"), ("tu",   "2s"),
+                ("il/elle",   "3s"), ("nous", "1p"), ("vous", "2p"),
+                ("ils/elles", "3p"),
+            ]
+            for pattern, person in person_patterns:
+                if pattern in element.text:
+                    conjugations[f'{tense}_{person}'] = element.text
                     break
-
-            # 提取变位
-            if current_mode and element.text.strip():
-
-                if current_mode == "infinitif":
-                    if "PRÉSENT" in elements[max(0, i-2):i+3]:
-                        conjugations['infinitif_present'] = element.text
-                    elif "PASSÉ" in [e.text.upper() for e in elements[max(0, i-2):i+3]]:
-                        conjugations['infinitif_passe'] = element.text
-
-                elif current_mode == "participe":
-                    if "PRÉSENT" in [e.text.upper() for e in elements[max(0, i-2):i+3]]:
-                        conjugations['participe_present'] = element.text
-                    elif "PASSÉ" in [e.text.upper() for e in elements[max(0, i-2):i+3]]:
-                        conjugations['participe_passe'] = element.text
-
-                elif current_mode == "imperatif":
-                    # 命令式特殊处理
-                    if current_tense:
-                        if not any(pattern[0] for pattern in person_patterns if re.match(pattern[0], element.text.lower())):
-                            # 简单形式的命令式
-                            if i + 2 < len(elements):
-                                conjugations[f'{current_mode}_{current_tense}_2s'] = element.text
-                                conjugations[f'{current_mode}_{current_tense}_1p'] = elements[i+1].text
-                                conjugations[f'{current_mode}_{current_tense}_2p'] = elements[i+2].text
-                                i += 2
-
                 else:
-                    # 其他语态的人称变位
-                    for pattern, person in person_patterns:
-                        if re.match(pattern, element.text.lower()):
-                            if current_mode and current_tense:
-                                # 提取动词部分（去除人称代词）
-                                verb_part = re.sub(pattern, '', element.text, flags=re.IGNORECASE).strip()
-                                if verb_part:
-                                    field_name = f'{current_mode}_{current_tense}_{person}'
-                                    if field_name in conjugations:
-                                        conjugations[field_name] = verb_part
-                            break
-
-            i += 1
+                    continue
 
         return conjugations
 
-    def extract_all_verbs(self, start_page: int = 9, end_page: int = 119) -> List[Dict]:
-        """提取所有动词（跳过52、53页）"""
+    def extract_all_verbs(self, start_page: int = 0, end_page: int = 1000) -> List[Dict]:
+        """提取所有动词"""
         all_verbs = []
 
         for page_num in range(start_page, end_page + 1):
-            if page_num in [51, 52]:  # PDF页码从0开始，所以52、53页对应51、52
+            if page_num in [41, 42]:  # PDF页码从0开始，所以52、53页对应51、52
                 continue
 
-            print(f"正在处理第 {page_num + 1} 页...")
+            print(f"正在处理第 {page_num} 页...")
 
             try:
                 verb_info = self.extract_verb_info(page_num)
@@ -333,21 +285,6 @@ class FrenchVerbExtractor:
                 print(f"  处理第 {page_num + 1} 页时出错: {e}")
 
         return all_verbs
-
-    def save_to_csv(self, verbs: List[Dict], output_file: str):
-        """保存到CSV文件"""
-        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.csv_headers)
-            writer.writeheader()
-
-            for verb in verbs:
-                # 确保所有字段都存在
-                row = {header: verb.get(header, "") for header in self.csv_headers}
-                writer.writerow(row)
-
-    def close(self):
-        """关闭文档"""
-        self.doc.close()
 
 class CSVAttributeManager:
     def __init__(self, csv_file):
@@ -496,31 +433,43 @@ def main():
     pdf_path = "bescherelle.pdf"
     output_csv = "french_verbs_conjugations.csv"
 
-    print("开始提取法语动词变位...")
-
     extractor = FrenchVerbExtractor(pdf_path)
+    manager = CSVAttributeManager(output_csv)
+
+    print("开始提取法语动词变位...")
 
     try:
         # 提取所有动词
-        verbs = extractor.extract_all_verbs(start_page=28, end_page=29)  # 第10页到第120页
-
+        verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
         print(f"\n总共提取了 {len(verbs)} 个动词")
 
         # 保存到CSV
-        extractor.save_to_csv(verbs, output_csv)
+        for verb in verbs:
+            element = verb['verbe']
+            for attr_name, attr_value in verb.items():
+                if attr_name == 'verbe':
+                    continue
+                manager.write_attribute(element, attr_name, attr_value)
+        # manager.read_attribute(element, attribute)
         print(f"结果已保存到 {output_csv}")
 
-        # 显示前几个动词的信息
-        for i, verb in enumerate(verbs[:3]):
-            print(f"\n动词 {i+1}: {verb['verbe']}")
-            print(f"  序号: {verb['indice']}")
-            print(f"  特征: {verb['caracterisation']}")
-            print(f"  现在时第一人称单数: {verb.get('indicatif_present_1s', 'N/A')}")
+        # 提取目录页
+
+
+        # 保存目录页结果到 CSV
+
+
+        ##########################################################################
+        # 上面完成了 PDF 相关的工作，接下来针对 CSV 进行补充调整
+        ##########################################################################
+
+        # 到网上查询其他单词
+
+
+        # 获取发音并填充
 
     except Exception as e:
         print(f"处理过程中出错: {e}")
-    finally:
-        extractor.close()
 
 if __name__ == "__main__":
     main()
