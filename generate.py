@@ -65,15 +65,15 @@ class FrenchVerbExtractor:
 
         self.pdf_position = {
             "indicatif_present": (40, 145, 180, 285),
-            "indicatif_passe_compose": (190, 145, 340, 285),
+            "indicatif_passe_compose": (180, 145, 340, 285),
             "indicatif_imparfait": (40, 300, 180, 440),
-            "indicatif_plus_que_parfait": (190, 300, 340, 440),
+            "indicatif_plus_que_parfait": (180, 300, 340, 440),
             "indicatif_passe_simple": (40, 460, 180, 600),
-            "indicatif_passe_anterieur": (190, 460, 340, 600),
+            "indicatif_passe_anterieur": (180, 460, 340, 600),
             "indicatif_futur_simple": (40, 615, 180, 760),
-            "indicatif_futur_anterieur": (190, 615, 340, 760),
-            "conditionnel_present": (40, 770, 180, 920),
-            "conditionnel_passe": (190, 770, 340, 920),
+            "indicatif_futur_anterieur": (180, 615, 340, 760),
+            "conditionnel_present": (40, 770, 180, 925),
+            "conditionnel_passe": (180, 770, 340, 925),
             "subjonctif_present": (350, 145, 500, 285),
             "subjonctif_passe": (500, 145, 700, 285),
             "subjonctif_imparfait": (350, 305, 500, 440),
@@ -84,11 +84,11 @@ class FrenchVerbExtractor:
             "imperatif_passe_2s": (500, 505, 700, 520),
             "imperatif_passe_1p": (500, 524, 700, 539),
             "imperatif_passe_2p": (500, 542, 700, 560),
-            "infinitif_present": (350, 623, 500, 640),
-            "infinitif_passe": (500, 623, 700, 640),
-            "participe_present": (350, 705, 500, 722),
-            "participe_passe": (500, 705, 700, 722),
-            "participe_passe_compose": (500, 725, 700, 740),
+            "infinitif_present": (350, 623, 500, 650),
+            "infinitif_passe": (500, 623, 700, 650),
+            "participe_present": (350, 705, 500, 725),
+            "participe_passe": (500, 705, 700, 725),
+            "participe_passe_compose": (500, 720, 700, 750),
         }
 
     def combine_line(self, current_line, elements):
@@ -104,7 +104,7 @@ class FrenchVerbExtractor:
         for text_span in current_line:
             # 计算：当前横坐标左端 - 上一个元素块横坐标右端
             position_diff = text_span.bbox[0] - temp_elem.bbox[2]
-            if position_diff > -1 and position_diff < 5:
+            if position_diff > -1 and position_diff < 5 and text_span.text[:5] != "qu’il":
                 # 满足连缀条件，进行连缀合并
                 if position_diff < 0.5:
                     temp_elem.text = f"{temp_elem.text}{text_span.text}" # 两个文字块是连着的，直接拼接
@@ -152,7 +152,7 @@ class FrenchVerbExtractor:
         if len(current_line) > 0:
             self.combine_line(current_line, elements)
 
-        print(elements)
+        # print(elements)
         return elements
 
     def helper_print_unicode(self, string):
@@ -160,7 +160,7 @@ class FrenchVerbExtractor:
         for char in string:
             unicode_list.append(f'\\u{ord(char):04x}')
         return "".join(unicode_list)
-    
+
     def sustitude_illegal_str(self, string):
         string_list = []
         for char in string:
@@ -172,7 +172,9 @@ class FrenchVerbExtractor:
                 string_list.append("ffi")
             elif f'\\u{ord(char):04x}' == '\\ue61d':
                 string_list.append("ffi")
-                
+            elif f'\\u{ord(char):04x}' == '\\ue61f':
+                string_list.append(" ")
+
             else:
                 string_list.append(char)
         return "".join(string_list)
@@ -193,17 +195,25 @@ class FrenchVerbExtractor:
 
         # 2. 提取动词名称
         verb_info['verbe'] = self.extract_verb_name(elements)
+        if page_num == 71 and verb_info['indice'] == '60' and verb_info['verbe'] == 'asseoir':
+            verb_info['verbe'] = f'{verb_info['verbe']}(1)'
+        if page_num == 72 and verb_info['indice'] == '61' and verb_info['verbe'] == 'asseoir':
+            verb_info['verbe'] = f'{verb_info['verbe']}(2)'
 
         # 3. 提取特征描述
         verb_info['caracterisation'] = self.extract_caracterisation(elements)
+        # print(f"caracterisation: {verb_info['caracterisation']}")
+        # print(f"caracterisation: {self.helper_print_unicode(verb_info['caracterisation'])}")
 
         # 4. 提取变位表格
         conjugations = self.extract_conjugations(elements)
         verb_info.update(conjugations)
         if conjugations['infinitif_present'] != verb_info['verbe']:
+            # 把 unicode 和字符都打出来，帮助定位需要哪些替换，好写在 sustitude_illegal_str 里
             print(f"infinitif_present: {conjugations['infinitif_present']}, and verbe: {verb_info['verbe']}.")
-            print(f"infinitif_present: {self.helper_print_unicode(conjugations['infinitif_present'])}, and verbe: {self.helper_print_unicode(verb_info['verbe'])}.")
-            if verb_info['verbe'] == "":
+            print(f"infinitif_present: {self.helper_print_unicode(conjugations['infinitif_present'])}, "
+                  f"and verbe: {self.helper_print_unicode(verb_info['verbe'])}.")
+            if verb_info['verbe'] == "": # 如果第 2 步没有提取到动词名称，则把不定时现在时当作动词名称
                 verb_info['verbe'] = conjugations['infinitif_present']
 
         # 5. 笔记和标签创建
@@ -281,11 +291,11 @@ class FrenchVerbExtractor:
             person_patterns = [
                 ("je",        "1s"), ("j’",   "1s"), ("tu",   "2s"),
                 ("il/elle",   "3s"), ("nous", "1p"), ("vous", "2p"),
-                ("ils/elles", "3p"),
+                ("ils/elles", "3p"), ("n.",   "1p"), ("v.",   "2p"),
                 ("que je",       "1s"), ("que j’",   "1s"), ("que tu",   "2s"),
                 ("qu’il/elle",   "3s"), ("que nous", "1p"), ("que vous", "2p"),
-                ("qu’ils/elles", "3p"),
-                ("que n. nous",  "1p"), ("que v. vous", "2p"),
+                ("qu’ils/elles", "3p"), ("que n.",   "1p"), ("que v.",   "2p"),
+                ("ils", "3p"), ("il", "3p"), ("qu’ils", "3p"), ("qu’il", "3p"),
             ]
             for pattern, person in person_patterns:
                 # print(f"pattern:{pattern}, person:{person}")
@@ -315,7 +325,7 @@ class FrenchVerbExtractor:
                     all_verbs.append(verb_info)
                     print(f"  提取动词: {verb_info['verbe']}")
             except Exception as e:
-                print(f"  处理第 {page_num + 1} 页时出错: {e}")
+                print(f"  处理第 {page_num} 页时出错: {e}")
 
         return all_verbs
 
@@ -473,7 +483,7 @@ def main():
 
     try:
         # 提取所有动词，10-116
-        verbs = extractor.extract_all_verbs(start_page=94, end_page=94)
+        verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
         print(f"\n总共提取了 {len(verbs)} 个动词")
 
         # 保存到CSV
@@ -483,6 +493,11 @@ def main():
                 if attr_name == 'verbe':
                     continue
                 manager.write_attribute(element, attr_name, attr_value)
+        # 特殊的表格特殊处理
+        manager.write_attribute("être aimé", "subjonctif_imparfait_1p", "que nous fussions aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_imparfait_3p", "qu’ils/elles fussent aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_1p", "que nous eussions été aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_3p", "qu’ils/elles eussentétéaimé(e)s")
         # manager.read_attribute(element, attribute)
         print(f"结果已保存到 {output_csv}")
 
@@ -510,21 +525,21 @@ if __name__ == "__main__":
 """
 手工修改记录：
 
-71、72 页：编号 60 和编号 61，是同一个单词的两种不同的变位形式。手工增加了序号。
-
 感觉可能是字体原因，某些特定的字母组合会解析出奇怪的自定义符号。
 手工校对太麻烦了，不如用爬虫爬网站来校对，可以更有保障，比解析 PDF 靠谱。
 
-正在处理第 13 页...
-infinitif_present: être aimé(e, s, es), and verbe: être aimé.
-无需处理
+第 13 页，序号 4，être aimé 的虚拟式变位连成一行了：
+得手动写进去：
+qu’ils/elles fussent aimé(e)s qu’ils/elles eussentétéaimé(e)s
 
-正在处理第 14 页...
-infinitif_present: s’aimer, and verbe: .
-无需处理
+现在还有一些问题：
+30 finir subjonctif_passe_1s imperatif_passe_1p imperatif_passe_2p participe_passe
+31 haïr imperatif_present_2s imperatif_present_1p imperatif_passe_2s imperatif_passe_1p
+77 dire imperatif_present_2s imperatif_present_1p imperatif_passe_2s imperatif_passe_1p
+82 suffire participe_passe
 
-正在处理第 88 页...
-infinitif_present: , and verbe: dire.
-需要处理
-
+先把这些问题通过代码的方式解决掉。然后就先不管了。先进行下一步。
+把目录里的动词都解析出来。这个比较重要，而且需要仔细核对，不能出错。
+这样一来，整个 CSV 的框架就有了。再根据动词到网站上查询，并把这个作为核对的一部分。
+最后才是获取所有的发音。
 """
