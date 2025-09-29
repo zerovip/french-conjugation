@@ -138,7 +138,7 @@ class FrenchVerbExtractor:
             if "lines" in block:
                 for line in block["lines"]:
                     for span in line["spans"]:
-                        text = span["text"]
+                        text = self.sustitude_illegal_str(span["text"])
                         if text:
                             if abs(current_y_position - span["bbox"][1]) > 5:
                                 self.combine_line(current_line, elements)
@@ -152,8 +152,30 @@ class FrenchVerbExtractor:
         if len(current_line) > 0:
             self.combine_line(current_line, elements)
 
-        # print(elements)
+        print(elements)
         return elements
+
+    def helper_print_unicode(self, string):
+        unicode_list = []
+        for char in string:
+            unicode_list.append(f'\\u{ord(char):04x}')
+        return "".join(unicode_list)
+    
+    def sustitude_illegal_str(self, string):
+        string_list = []
+        for char in string:
+            if f'\\u{ord(char):04x}' == '\\ufb01':
+                string_list.append("fi")
+            elif f'\\u{ord(char):04x}' == '\\ue61e':
+                string_list.append("fi")
+            elif f'\\u{ord(char):04x}' == '\\ue61b':
+                string_list.append("ffi")
+            elif f'\\u{ord(char):04x}' == '\\ue61d':
+                string_list.append("ffi")
+                
+            else:
+                string_list.append(char)
+        return "".join(string_list)
 
     def extract_verb_info(self, page_num: int) -> Optional[Dict]:
         """从单页提取动词信息"""
@@ -180,6 +202,7 @@ class FrenchVerbExtractor:
         verb_info.update(conjugations)
         if conjugations['infinitif_present'] != verb_info['verbe']:
             print(f"infinitif_present: {conjugations['infinitif_present']}, and verbe: {verb_info['verbe']}.")
+            print(f"infinitif_present: {self.helper_print_unicode(conjugations['infinitif_present'])}, and verbe: {self.helper_print_unicode(verb_info['verbe'])}.")
             if verb_info['verbe'] == "":
                 verb_info['verbe'] = conjugations['infinitif_present']
 
@@ -238,7 +261,10 @@ class FrenchVerbExtractor:
             conjugations[f"{header}_audio"] = ""
 
         for element in elements:
+            # print("================================================")
+            # print(f"element:{element}")
             tense = self.decide_tense_by_position(element)
+            # print(f"tense:{tense}")
             if tense == "":
                 continue
 
@@ -256,14 +282,21 @@ class FrenchVerbExtractor:
                 ("je",        "1s"), ("j’",   "1s"), ("tu",   "2s"),
                 ("il/elle",   "3s"), ("nous", "1p"), ("vous", "2p"),
                 ("ils/elles", "3p"),
+                ("que je",       "1s"), ("que j’",   "1s"), ("que tu",   "2s"),
+                ("qu’il/elle",   "3s"), ("que nous", "1p"), ("que vous", "2p"),
+                ("qu’ils/elles", "3p"),
+                ("que n. nous",  "1p"), ("que v. vous", "2p"),
             ]
             for pattern, person in person_patterns:
-                if pattern in element.text:
+                # print(f"pattern:{pattern}, person:{person}")
+                if element.text.startswith(pattern):
+                    # print("ok, update")
                     conjugations[f'{tense}_{person}'] = element.text
                     break
                 else:
                     continue
 
+        # print(conjugations)
         return conjugations
 
     def extract_all_verbs(self, start_page: int = 0, end_page: int = 1000) -> List[Dict]:
@@ -439,8 +472,8 @@ def main():
     print("开始提取法语动词变位...")
 
     try:
-        # 提取所有动词
-        verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
+        # 提取所有动词，10-116
+        verbs = extractor.extract_all_verbs(start_page=94, end_page=94)
         print(f"\n总共提取了 {len(verbs)} 个动词")
 
         # 保存到CSV
@@ -490,19 +523,8 @@ infinitif_present: être aimé(e, s, es), and verbe: être aimé.
 infinitif_present: s’aimer, and verbe: .
 无需处理
 
-正在处理第 39 页...
-infinitif_present: ﬁnir, and verbe: nir.
-需要处理
-
 正在处理第 88 页...
 infinitif_present: , and verbe: dire.
 需要处理
 
-正在处理第 93 页...
-infinitif_present: sure, and verbe: sure.
-需要处理
-
-正在处理第 94 页...
-infinitif_present: conﬁre, and verbe: conre.
-需要处理
 """
