@@ -190,7 +190,10 @@ class FrenchVerbExtractor:
             elif f'\\u{ord(char):04x}' == '\\ue61d':
                 # 这个 unicode 比较复杂，有的时候是 fl，有的时候是 ffi，有的时候是右箭头
                 ffi_word_list = [
-                    "su\ue61dre",
+                    "su\ue61dre", "ra\ue61dner", "para\ue61dner", "su\ue61dxer", "réa\ue61drmer",
+                    "o\ue61dcialiser", "o\ue61dcier", "gra\ue61dter", "e\ue61dler", "e\ue61dlocher",
+                    "désa\ue61dlier", "bou\ue61dr", "a\ue61dcher", "a\ue61dler", "a\ue61dlier",
+                    "a\ue61dner", "a\ue61drmer",
                 ]
                 fi_word_list = [
                     "\ue61dnir",
@@ -199,14 +202,14 @@ class FrenchVerbExtractor:
                     # 93 页 suffire
                     string_list.append("ffi")
                 elif any(element in string for element in fi_word_list):
-                    string_list.append("fi")
+                    string_list.append("fi")#raﬂer
                 else:
                     string_list.append("->")
             elif f'\\u{ord(char):04x}' == '\\ue61f':
-                # 这个 unicode 比较复杂，有的时候是向右的箭头，有的时候是 ff，还有的时候是 fi
+                # 这个 unicode 比较复杂，有的时候是向右的箭头，有的时候是空格，有的时候是 ff，还有的时候是 fi
                 ff_word_list = [
                     "su\ue61fîmes", "su\ue61fîtes", "su\ue61fît", "su\ue61fi", "o\ue61frir", "sou\ue61frir",
-                    "e\ue61frayer"
+                    "e\ue61frayer", "indi\ue61férer",
                 ]
                 fi_word_list = [
                     "in\ue61fnitif", "\ue61fnal", "\ue61fgées", "\ue61fguré", "a\ue61fn", "\ue61fn",
@@ -217,7 +220,8 @@ class FrenchVerbExtractor:
                 elif any(element in string for element in fi_word_list):
                     string_list.append("fi")
                 else:
-                    string_list.append("->")
+                    # print(f"===fff substitude string: {string}, char: {char}")
+                    string_list.append(" ")
 
             else:
                 string_list.append(char)
@@ -373,6 +377,31 @@ class FrenchVerbExtractor:
 
         return all_verbs
 
+    def extract_verbs_from_repertoire(self, page_num: int, all_verbs: List[Dict]):
+        """从动词库中提取所有动词"""
+        page = self.doc[page_num]
+        elements = self.extract_text_elements(page)
+
+        if not elements:
+            return None
+
+        print(elements)
+
+    def extract_from_repertoire(self, start_page: int = 188, end_page: int = 256) -> List[Dict]:
+        """提取动词库"""
+        all_verbs = []
+
+        for page_num in range(start_page, end_page + 1):
+            print(f"正在处理第 {page_num} 页...")
+
+            try:
+                self.extract_verbs_from_repertoire(page_num, all_verbs)
+            except Exception as e:
+                print(f"  处理第 {page_num} 页时出错: {e}")
+
+        return all_verbs
+
+
 class CSVAttributeManager:
     def __init__(self, csv_file):
         self.csv_file = csv_file
@@ -526,27 +555,27 @@ def main():
     print("开始提取法语动词变位...")
 
     try:
-        # 提取所有动词，10-116
-        verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
-        print(f"\n总共提取了 {len(verbs)} 个动词")
+        # # 提取所有动词，10-116
+        # verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
+        # print(f"\n总共提取了 {len(verbs)} 个动词")
 
-        # 保存到CSV
-        for verb in verbs:
-            element = verb['verbe']
-            for attr_name, attr_value in verb.items():
-                if attr_name == 'verbe':
-                    continue
-                manager.write_attribute(element, attr_name, attr_value)
-        # 特殊的表格特殊处理
-        manager.write_attribute("être aimé", "subjonctif_imparfait_1p", "que nous fussions aimé(e)s")
-        manager.write_attribute("être aimé", "subjonctif_imparfait_3p", "qu’ils/elles fussent aimé(e)s")
-        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_1p", "que nous eussions été aimé(e)s")
-        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_3p", "qu’ils/elles eussentétéaimé(e)s")
-        # manager.read_attribute(element, attribute)
-        print(f"结果已保存到 {output_csv}")
+        # # 保存到CSV
+        # for verb in verbs:
+        #     element = verb['verbe']
+        #     for attr_name, attr_value in verb.items():
+        #         if attr_name == 'verbe':
+        #             continue
+        #         manager.write_attribute(element, attr_name, attr_value)
+        # # 特殊的表格特殊处理
+        # manager.write_attribute("être aimé", "subjonctif_imparfait_1p", "que nous fussions aimé(e)s")
+        # manager.write_attribute("être aimé", "subjonctif_imparfait_3p", "qu’ils/elles fussent aimé(e)s")
+        # manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_1p", "que nous eussions été aimé(e)s")
+        # manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_3p", "qu’ils/elles eussentétéaimé(e)s")
+        # # manager.read_attribute(element, attribute)
+        # print(f"结果已保存到 {output_csv}")
 
-        # 提取目录页
-
+        # 提取目录页，188 - 256 页
+        all_verbs = extractor.extract_from_repertoire(start_page=188, end_page=255)
 
         # 保存目录页结果到 CSV
 
