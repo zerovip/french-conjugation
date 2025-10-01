@@ -64,31 +64,31 @@ class FrenchVerbExtractor:
         ]
 
         self.pdf_position = {
-            "indicatif_present": (40, 145, 180, 285),
-            "indicatif_passe_compose": (180, 145, 340, 285),
-            "indicatif_imparfait": (40, 300, 180, 440),
-            "indicatif_plus_que_parfait": (180, 300, 340, 440),
-            "indicatif_passe_simple": (40, 460, 180, 600),
-            "indicatif_passe_anterieur": (180, 460, 340, 600),
-            "indicatif_futur_simple": (40, 615, 180, 760),
-            "indicatif_futur_anterieur": (180, 615, 340, 760),
-            "conditionnel_present": (40, 770, 180, 925),
-            "conditionnel_passe": (180, 770, 340, 925),
-            "subjonctif_present": (350, 145, 500, 285),
-            "subjonctif_passe": (500, 145, 700, 285),
-            "subjonctif_imparfait": (350, 305, 500, 440),
-            "subjonctif_plus_que_parfait": (500, 305, 700, 440),
-            "imperatif_present_2s": (350, 505, 500, 520),
-            "imperatif_present_1p": (350, 524, 500, 539),
-            "imperatif_present_2p": (350, 542, 500, 560),
-            "imperatif_passe_2s": (500, 505, 700, 520),
-            "imperatif_passe_1p": (500, 524, 700, 539),
-            "imperatif_passe_2p": (500, 542, 700, 560),
-            "infinitif_present": (350, 623, 500, 650),
-            "infinitif_passe": (500, 623, 700, 650),
-            "participe_present": (350, 705, 500, 725),
-            "participe_passe": (500, 705, 700, 725),
-            "participe_passe_compose": (500, 720, 700, 750),
+            'indicatif_present': (40, 145, 180, 285),
+            'indicatif_passe_compose': (180, 145, 340, 285),
+            'indicatif_imparfait': (40, 300, 180, 440),
+            'indicatif_plus_que_parfait': (180, 300, 340, 440),
+            'indicatif_passe_simple': (40, 460, 180, 600),
+            'indicatif_passe_anterieur': (180, 460, 340, 600),
+            'indicatif_futur_simple': (40, 615, 180, 760),
+            'indicatif_futur_anterieur': (180, 615, 340, 760),
+            'conditionnel_present': (40, 770, 180, 925),
+            'conditionnel_passe': (180, 770, 340, 925),
+            'subjonctif_present': (350, 145, 500, 285),
+            'subjonctif_passe': (495, 145, 700, 285),
+            'subjonctif_imparfait': (350, 305, 500, 440),
+            'subjonctif_plus_que_parfait': (500, 305, 700, 440),
+            'imperatif_present_2s': (350, 500, 500, 525),
+            'imperatif_present_1p': (350, 520, 500, 542),
+            'imperatif_present_2p': (350, 540, 500, 560),
+            'imperatif_passe_2s': (495, 500, 700, 525),
+            'imperatif_passe_1p': (495, 520, 700, 542),
+            'imperatif_passe_2p': (495, 540, 700, 560),
+            'infinitif_present': (350, 623, 500, 650),
+            'infinitif_passe': (495, 623, 700, 650),
+            'participe_present': (350, 705, 500, 725),
+            'participe_passe': (495, 705, 700, 725),
+            'participe_passe_compose': (495, 720, 700, 750),
         }
 
     def combine_line(self, current_line, elements):
@@ -165,15 +165,59 @@ class FrenchVerbExtractor:
         string_list = []
         for char in string:
             if f'\\u{ord(char):04x}' == '\\ufb01':
+                # print(f"===substitude string: {string}, char: {char}")
                 string_list.append("fi")
             elif f'\\u{ord(char):04x}' == '\\ue61e':
-                string_list.append("fi")
+                # 这个 unicode 比较复杂，有的时候是 fi，有的时候是大圆点
+                fi_word_list = [
+                    "\ue61enir", "\ue61enis", "\ue61enirai", "\ue61enissons", "\ue61enisse",
+                    "con\ue61ere", "décon\ue61et",
+                ]
+                if any(element in string for element in fi_word_list):
+                    string_list.append("fi")
+                else:
+                    string_list.append(" ")
             elif f'\\u{ord(char):04x}' == '\\ue61b':
-                string_list.append("ffi")
+                # 这个 unicode 比较复杂，有的时候是 fl，有的时候是 ffi
+                fl_word_list = [
+                    "circon\ue61bexe", "in\ue61buence", "ré\ue61béchi",
+                ]
+                if any(element in string for element in fl_word_list):
+                    string_list.append("fl")
+                else:
+                    # 93 页 suffire
+                    string_list.append("ffi")
             elif f'\\u{ord(char):04x}' == '\\ue61d':
-                string_list.append("ffi")
+                # 这个 unicode 比较复杂，有的时候是 fl，有的时候是 ffi，有的时候是右箭头
+                ffi_word_list = [
+                    "su\ue61dre",
+                ]
+                fi_word_list = [
+                    "\ue61dnir",
+                ]
+                if any(element in string for element in ffi_word_list):
+                    # 93 页 suffire
+                    string_list.append("ffi")
+                elif any(element in string for element in fi_word_list):
+                    string_list.append("fi")
+                else:
+                    string_list.append("->")
             elif f'\\u{ord(char):04x}' == '\\ue61f':
-                string_list.append(" ")
+                # 这个 unicode 比较复杂，有的时候是向右的箭头，有的时候是 ff，还有的时候是 fi
+                ff_word_list = [
+                    "su\ue61fîmes", "su\ue61fîtes", "su\ue61fît", "su\ue61fi", "o\ue61frir", "sou\ue61frir",
+                    "e\ue61frayer"
+                ]
+                fi_word_list = [
+                    "in\ue61fnitif", "\ue61fnal", "\ue61fgées", "\ue61fguré", "a\ue61fn", "\ue61fn",
+                    "\ue61fnale",
+                ]
+                if any(element in string for element in ff_word_list):
+                    string_list.append("ff")
+                elif any(element in string for element in fi_word_list):
+                    string_list.append("fi")
+                else:
+                    string_list.append("->")
 
             else:
                 string_list.append(char)
@@ -196,9 +240,9 @@ class FrenchVerbExtractor:
         # 2. 提取动词名称
         verb_info['verbe'] = self.extract_verb_name(elements)
         if page_num == 71 and verb_info['indice'] == '60' and verb_info['verbe'] == 'asseoir':
-            verb_info['verbe'] = f'{verb_info['verbe']}(1)'
+            verb_info['verbe'] = f"{verb_info['verbe']}(1)"
         if page_num == 72 and verb_info['indice'] == '61' and verb_info['verbe'] == 'asseoir':
-            verb_info['verbe'] = f'{verb_info['verbe']}(2)'
+            verb_info['verbe'] = f"{verb_info['verbe']}(2)"
 
         # 3. 提取特征描述
         verb_info['caracterisation'] = self.extract_caracterisation(elements)
@@ -528,15 +572,6 @@ if __name__ == "__main__":
 感觉可能是字体原因，某些特定的字母组合会解析出奇怪的自定义符号。
 手工校对太麻烦了，不如用爬虫爬网站来校对，可以更有保障，比解析 PDF 靠谱。
 
-第 13 页，序号 4，être aimé 的虚拟式变位连成一行了：
-得手动写进去：
-qu’ils/elles fussent aimé(e)s qu’ils/elles eussentétéaimé(e)s
-
-现在还有一些问题：
-30 finir subjonctif_passe_1s imperatif_passe_1p imperatif_passe_2p participe_passe
-31 haïr imperatif_present_2s imperatif_present_1p imperatif_passe_2s imperatif_passe_1p
-77 dire imperatif_present_2s imperatif_present_1p imperatif_passe_2s imperatif_passe_1p
-82 suffire participe_passe
 
 先把这些问题通过代码的方式解决掉。然后就先不管了。先进行下一步。
 把目录里的动词都解析出来。这个比较重要，而且需要仔细核对，不能出错。
