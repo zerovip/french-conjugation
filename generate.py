@@ -167,15 +167,40 @@ class FrenchVerbExtractor:
             if f'\\u{ord(char):04x}' == '\\ufb01':
                 # print(f"===substitude string: {string}, char: {char}")
                 string_list.append("fi")
+            elif f'\\u{ord(char):04x}' == '\\ufb02':
+                # print(f"===substitude string: {string}, char: {char}")
+                string_list.append("fl")
             elif f'\\u{ord(char):04x}' == '\\ue61e':
                 # 这个 unicode 比较复杂，有的时候是 fi，有的时候是大圆点
                 fi_word_list = [
                     "\ue61enir", "\ue61enis", "\ue61enirai", "\ue61enissons", "\ue61enisse",
                     "con\ue61ere", "décon\ue61et",
                 ]
+                ff_word_list = [
+                    "aabuler", "aadir", "aaiblir", "s’aairer", "aaisser", "aaler", "aamer",
+                    "aaner", "aéager", "aecter", "aectionner", "aérer", "aermer", "aermir",
+                    "aoler", "aouager", "aouiller", "aour(r)ager", "aranchir", "aréter",
+                    "ariander", "arioler", "aronter", "aubler", "aûter", "agrier", "assoier",
+                    "baer", "baladodiuser", "bier", "bleer", "bluer", "bouer", "bouonner",
+                    "chauer", "chionner", "chirer", "corer", "coier", "déchionner", "déchirer",
+                    "décorer", "décoier", "se dédiérencier", "dégrier", "diamer", "diérencier",
+                    "diérentier", "diérer", "diormer", "diracter", "diuser", "ébourier", "étouer",
+                    "échauer", "éclaer", "eacer", "eaner", "earer", "earoucher", "eectuer",
+                    "eéminer", "eeuiller", "eondrer", "s’eorcer", "eranger", "erayer", "eriter",
+                    "eulger", "eumer", "euser", "s’empirer", "encorer", "engourer", "s’entregreer",
+                    "s’esclaer", "étoer", "ﬁeer", "gaer", "graer", "greer", "grier", "grionner",
+                    "indiérencier", "indiérer", "jaer", "oenser", "orir", "ousquer", "piaer",
+                    "pirer", "pouer", "préchauer", "radiodiuser", "se rebier", "rechauer",
+                    "réchauer", "recoier", "rediuser", "regreer", "resurchauer", "soier", "sourir",
+                    "staer", "suoquer", "surchauer", "surgreer", "taer", "télédiuser", "truer",
+                ]
                 if any(element in string for element in fi_word_list):
                     string_list.append("fi")
+                elif any(element in string for element in ff_word_list):
+                    string_list.append("ff")
                 else:
+                    # if len(string) != 1:
+                    #     print(f"===ccc substitude string: {string}, char: {char}")
                     string_list.append(" ")
             elif f'\\u{ord(char):04x}' == '\\ue61b':
                 # 这个 unicode 比较复杂，有的时候是 fl，有的时候是 ffi
@@ -185,7 +210,7 @@ class FrenchVerbExtractor:
                 if any(element in string for element in fl_word_list):
                     string_list.append("fl")
                 else:
-                    # 93 页 suffire
+                    # 93 页
                     string_list.append("ffi")
             elif f'\\u{ord(char):04x}' == '\\ue61d':
                 # 这个 unicode 比较复杂，有的时候是 fl，有的时候是 ffi，有的时候是右箭头
@@ -204,12 +229,14 @@ class FrenchVerbExtractor:
                 elif any(element in string for element in fi_word_list):
                     string_list.append("fi")#raﬂer
                 else:
+                    # if len(string) != 1:
+                    #     print(f"===eee substitude string: {string}, char: {char}")
                     string_list.append("->")
             elif f'\\u{ord(char):04x}' == '\\ue61f':
                 # 这个 unicode 比较复杂，有的时候是向右的箭头，有的时候是空格，有的时候是 ff，还有的时候是 fi
                 ff_word_list = [
                     "su\ue61fîmes", "su\ue61fîtes", "su\ue61fît", "su\ue61fi", "o\ue61frir", "sou\ue61frir",
-                    "e\ue61frayer", "indi\ue61férer",
+                    "e\ue61frayer", "indi\ue61férer", "bier", "dégrier",
                 ]
                 fi_word_list = [
                     "in\ue61fnitif", "\ue61fnal", "\ue61fgées", "\ue61fguré", "a\ue61fn", "\ue61fn",
@@ -220,7 +247,20 @@ class FrenchVerbExtractor:
                 elif any(element in string for element in fi_word_list):
                     string_list.append("fi")
                 else:
-                    # print(f"===fff substitude string: {string}, char: {char}")
+                    # if len(string) != 1:
+                    #     print(f"===fff substitude string: {string}, char: {char}")
+                    string_list.append(" ")
+            elif f'\\u{ord(char):04x}' == '\\ue61c':
+                ffl_word_list = [
+                    "aeurer", "aiger", "aouer", "auer", "diuer", "eanquer", "eeurer", "eeurir",
+                    "s’eorer", "euer", "euver", "essouer", "insuer", "sier", "sioter", "souer",
+                    "soueter",
+                ]
+                if any(element in string for element in ffl_word_list):
+                    string_list.append("ffl")
+                else:
+                    # if len(string) != 1:
+                    #     print(f"===ggg substitude string: {string}, char: {char}")
                     string_list.append(" ")
 
             else:
@@ -357,7 +397,7 @@ class FrenchVerbExtractor:
         # print(conjugations)
         return conjugations
 
-    def extract_all_verbs(self, start_page: int = 0, end_page: int = 1000) -> List[Dict]:
+    def extract_all_verbs(self, start_page: int = 10, end_page: int = 116) -> List[Dict]:
         """提取所有动词"""
         all_verbs = []
 
@@ -377,15 +417,152 @@ class FrenchVerbExtractor:
 
         return all_verbs
 
+    def combine_repertoire_line(self, current_line, elements):
+        # 每一行元素先按左端横坐标排序
+        current_line.sort(key = lambda x: (x.bbox[0]))
+
+        temp_elem = TextElement(
+            text = "",
+            size = 0.0,
+            bbox = (0.0, 0.0, 0.0, 0.0)
+        )
+
+        for text_span in current_line:
+            if temp_elem.text == "":
+                temp_elem = text_span
+                continue
+
+            if text_span.size < 10:
+                temp_elem.text = f"{temp_elem.text} ({text_span.text})"
+            else:
+                temp_elem.text = f"{temp_elem.text}...{text_span.text}"
+            temp_elem.size = max(temp_elem.size, text_span.size)
+            temp_elem.bbox = (
+                temp_elem.bbox[0],
+                min(temp_elem.bbox[1], text_span.bbox[1]),
+                text_span.bbox[2],
+                max(temp_elem.bbox[3], text_span.bbox[3])
+            )
+
+        if temp_elem.text != "":
+            elements.append(deepcopy(temp_elem))
+
+    def extract_repertoire_elements(self, page) -> List[TextElement]:
+        """提取目录页的动词信息"""
+        elements = []
+        blocks = page.get_text("dict")
+        current_line = []
+        current_y_position = 0.0
+        for block in blocks["blocks"]:
+            if "lines" in block:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = self.sustitude_illegal_str(span["text"]).strip()
+                        if text:
+                            if abs(current_y_position - span["bbox"][1]) > 5:
+                                self.combine_repertoire_line(current_line, elements)
+                                current_line = []
+                            current_line.append(TextElement(
+                                text = text,
+                                size = span["size"],
+                                bbox = span["bbox"]
+                            ))
+                            current_y_position = span["bbox"][1]
+        if len(current_line) > 0:
+            self.combine_repertoire_line(current_line, elements)
+
+        # print(elements)
+        return elements
+
+    def add_label(self, label_string):
+        label_list = []
+        string_split = label_string.split(",")
+        for label in string_split:
+            label = label.strip()
+            if label == "T":
+                label_list.append("T_transitif_direct")
+            elif label == "Ti":
+                label_list.append("Ti_transitif_indirect")
+            elif label == "I":
+                label_list.append("I_intransitif")
+            elif label == "Esp":
+                label_list.append("Esp_verbe_essentiellement_pronominal")
+            elif label == "P":
+                label_list.append("P_forme_pronominale")
+            elif label == "imp.":
+                label_list.append("imp._impersonnel")
+            elif label == "D":
+                label_list.append("D_défectif")
+            else:
+                label_list.append(label.replace(" ", "_"))
+
+        return " ".join(label_list)
+
+
     def extract_verbs_from_repertoire(self, page_num: int, all_verbs: List[Dict]):
         """从动词库中提取所有动词"""
         page = self.doc[page_num]
-        elements = self.extract_text_elements(page)
+        elements = self.extract_repertoire_elements(page)
+        # print(elements)
 
         if not elements:
-            return None
+            return
 
-        print(elements)
+        temp_verb_info = {
+            'verbe': '',
+            'caracterisation': '',
+            'notes': '',
+            'labels': '',
+        }
+        pattern = (r'^(?:(\d+)\.{3})?'
+            r'([a-zA-ZÀ-ÿ\u00E0-\u00FC\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF’\s\-\(\)\*]+)'
+            r'\.{4,}\s*([a-zA-Z\.\s,]+)$')
+
+        duplicate_num = 0
+        for element in elements:
+            if element.bbox[1] > 940 or element.bbox[0] > 680 or element.bbox[3] < 60:
+                continue  # 页码、侧面标题、顶部首位锚点
+            if element.size > 30:
+                continue  # 首字母
+
+            match = re.match(pattern, element.text)
+
+            if not match:
+                # 没有匹配上，说明是下面的单词的注释
+                element.text = element.text.replace("....", ". ").replace("...", " ")
+                if temp_verb_info['verbe'] != '':
+                    if temp_verb_info['notes'] != '':
+                        temp_verb_info['notes'] += f"\n{element.text}"
+                    else:
+                        temp_verb_info['notes'] = element.text
+                else:
+                    print(f"===没有匹配上，但此时没有单词。text: {element.text}, unicode: {self.helper_print_unicode(element.text)}")
+
+            else:
+                # print(f"(1): {match.group(1)}, (2): {match.group(2)}, (3): {match.group(3)}, text: {element.text}")
+
+                duplicate_verbes = [
+                    # 这些单词在动词库中是重复的
+                    "barder", "partir", "repartir", "ressortir", "saillir", "sortir",
+                ]
+                if match.group(2) in duplicate_verbes:
+                    duplicate_num += 1
+                else:
+                    duplicate_num = 0
+
+                # 如果匹配上了，先把上一个临时的 temp_verb_info 保存起来
+                if temp_verb_info['verbe'] != '':
+                    all_verbs.append(deepcopy(temp_verb_info))
+
+                temp_verb_info = {
+                    'verbe': f"{match.group(2)}({duplicate_num})" if duplicate_num != 0 else match.group(2),
+                    'caracterisation': match.group(1),
+                    'notes': '',
+                    'labels': self.add_label(match.group(3)),
+                }
+
+        if temp_verb_info['verbe'] != '':
+            all_verbs.append(deepcopy(temp_verb_info))
 
     def extract_from_repertoire(self, start_page: int = 188, end_page: int = 256) -> List[Dict]:
         """提取动词库"""
@@ -399,8 +576,8 @@ class FrenchVerbExtractor:
             except Exception as e:
                 print(f"  处理第 {page_num} 页时出错: {e}")
 
+        # print(all_verbs)
         return all_verbs
-
 
 class CSVAttributeManager:
     def __init__(self, csv_file):
@@ -555,29 +732,48 @@ def main():
     print("开始提取法语动词变位...")
 
     try:
-        # # 提取所有动词，10-116
-        # verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
-        # print(f"\n总共提取了 {len(verbs)} 个动词")
+        # 提取所有动词，10-116
+        verbs = extractor.extract_all_verbs(start_page=10, end_page=116)
+        print(f"\n总共提取了 {len(verbs)} 个动词")
 
-        # # 保存到CSV
-        # for verb in verbs:
-        #     element = verb['verbe']
-        #     for attr_name, attr_value in verb.items():
-        #         if attr_name == 'verbe':
-        #             continue
-        #         manager.write_attribute(element, attr_name, attr_value)
-        # # 特殊的表格特殊处理
-        # manager.write_attribute("être aimé", "subjonctif_imparfait_1p", "que nous fussions aimé(e)s")
-        # manager.write_attribute("être aimé", "subjonctif_imparfait_3p", "qu’ils/elles fussent aimé(e)s")
-        # manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_1p", "que nous eussions été aimé(e)s")
-        # manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_3p", "qu’ils/elles eussentétéaimé(e)s")
-        # # manager.read_attribute(element, attribute)
-        # print(f"结果已保存到 {output_csv}")
+        # 保存到CSV
+        for verb in verbs:
+            element = verb['verbe']
+            for attr_name, attr_value in verb.items():
+                if attr_name == 'verbe':
+                    continue
+                manager.write_attribute(element, attr_name, attr_value)
+        # 特殊的表格特殊处理
+        manager.write_attribute("être aimé", "subjonctif_imparfait_1p", "que nous fussions aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_imparfait_3p", "qu’ils/elles fussent aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_1p", "que nous eussions été aimé(e)s")
+        manager.write_attribute("être aimé", "subjonctif_plus_que_parfait_3p", "qu’ils/elles eussentétéaimé(e)s")
+        # manager.read_attribute(element, attribute)
+        print(f"结果已保存到 {output_csv}")
 
         # 提取目录页，188 - 256 页
-        all_verbs = extractor.extract_from_repertoire(start_page=188, end_page=255)
+        all_verbs = extractor.extract_from_repertoire(start_page=188, end_page=256)
 
         # 保存目录页结果到 CSV
+        for verb_from_repertoire in all_verbs:
+            element = verb_from_repertoire['verbe']
+            try:
+                indice_from_csv = manager.read_attribute(element, 'indice')
+                if indice_from_csv != verb_from_repertoire['caracterisation']:
+                    print(f"表格中存在 {element}，表格中的 indice 是 {indice_from_csv} 但目录中的是 {verb_from_repertoire['caracterisation']}")
+
+                if verb_from_repertoire['labels']:
+                    manager.write_attribute(element, 'labels', verb_from_repertoire['labels'])
+                if verb_from_repertoire['notes']:
+                    manager.write_attribute(element, 'notes', verb_from_repertoire['notes'])
+
+            except ValueError:  # 元素不存在，添加进表格中
+                if verb_from_repertoire['caracterisation']:
+                    manager.write_attribute(element, 'caracterisation', verb_from_repertoire['caracterisation'])
+                if verb_from_repertoire['labels']:
+                    manager.write_attribute(element, 'labels', verb_from_repertoire['labels'])
+                if verb_from_repertoire['notes']:
+                    manager.write_attribute(element, 'notes', verb_from_repertoire['notes'])
 
 
         ##########################################################################
@@ -596,14 +792,10 @@ if __name__ == "__main__":
     main()
 
 """
-手工修改记录：
+记录：
 
-感觉可能是字体原因，某些特定的字母组合会解析出奇怪的自定义符号。
-手工校对太麻烦了，不如用爬虫爬网站来校对，可以更有保障，比解析 PDF 靠谱。
+现在这个代码读写 csv 文件太慢了，跑一次要 20 分钟，感觉不是一个好办法。后面需要优化一下。
 
-
-先把这些问题通过代码的方式解决掉。然后就先不管了。先进行下一步。
-把目录里的动词都解析出来。这个比较重要，而且需要仔细核对，不能出错。
-这样一来，整个 CSV 的框架就有了。再根据动词到网站上查询，并把这个作为核对的一部分。
-最后才是获取所有的发音。
+现在整个 CSV 的框架就有了。再根据动词到网站上查询，并把这个作为核对的一部分。
+最后还要获取所有的发音。
 """
