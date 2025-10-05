@@ -247,23 +247,47 @@ verbe_attribute = [
     'participe_present', 'participe_passe', 'participe_passe_compose',
 ]
 
+def split_3_person_to_two(str, split_sign):
+    if split_sign == "ils/elles" or split_sign == "ils (elles)":
+        person_list = ["ils", "elles"]
+    elif split_sign == "il/elle" or split_sign == "il (elle)":
+        person_list = ["il", "elle"]
+
+    prefix = str.split(split_sign)[0]
+    word_root = str.split(split_sign)[1]
+    if "(e)" in word_root:
+        word_root_list = [word_root.replace("(e)", ""), word_root.replace("(e)", "e")]
+    else:
+        word_root_list = [word_root, word_root]
+
+    return f"{prefix}{person_list[0]}{word_root_list[0]} / {prefix}{person_list[1]}{word_root_list[1]}"
+
+
 def split_3sp(combine_str):
     combine_str = combine_str.replace("n.", "nous").replace("v.", "vous")
     if "ils/elles" in combine_str:
-        elements = combine_str.split("ils/elles")
-        split_str = f"{elements[0]}ils{elements[1]} / {elements[0]}elles{elements[1]}"
+        return split_3_person_to_two(combine_str, "ils/elles")
     elif "il/elle" in combine_str:
-        elements = combine_str.split("il/elle")
-        split_str = f"{elements[0]}il{elements[1]} / {elements[0]}elle{elements[1]}"
+        return split_3_person_to_two(combine_str, "il/elle")
     elif "ils (elles)" in combine_str:
-        elements = combine_str.split("ils (elles)")
-        split_str = f"{elements[0]}ils{elements[1]} / {elements[0]}elles{elements[1]}"
+        return split_3_person_to_two(combine_str, "ils (elles)")
     elif "il (elle)" in combine_str:
-        elements = combine_str.split("il (elle)")
-        split_str = f"{elements[0]}il{elements[1]} / {elements[0]}elle{elements[1]}"
+        return split_3_person_to_two(combine_str, "il (elle)")
     else:
-        split_str = combine_str
-    return split_str
+        if "(e)" in combine_str:
+            prefix = combine_str.split("(e)")[0]
+            word_root = combine_str.split("(e)")[1]
+            return f"{prefix}{word_root} / {prefix}e{word_root}"
+        elif "(e, s, es)" in combine_str:
+            prefix = combine_str.split("(e, s, es)")[0]
+            word_root = combine_str.split("(e, s, es)")[1]
+            return f"{prefix}{word_root} / {prefix}e{word_root} / {prefix}s{word_root} / {prefix}es{word_root}"
+        elif "(e, es)" in combine_str:
+            prefix = combine_str.split("(e, es)")[0]
+            word_root = combine_str.split("(e, es)")[1]
+            return f"{prefix}{word_root} / {prefix}e{word_root} / {prefix}es{word_root}"
+        else:
+            return combine_str
 
 def main():
     conjugation_csv = "conjugations_to_anki.csv"
@@ -277,14 +301,38 @@ def main():
                 ret, path = tts(split_3sp(text))
                 if ret == 0 and path:
                     path = path.replace("/", "")
-                    manager.write_attribute(verb, f"{attribute}_audio", path)
+                    manager.write_attribute(verb, f"{attribute}_audio", f"[sound:fr-conj-{path}]")
             # if text == ".":
             #     manager.write_attribute(verb, f"{attribute}", "")
             #     manager.write_attribute(verb, f"{attribute}_audio", "")
             #     print(f"delete . of verb: {verb}, attr: {attribute}, text: {text}, sound: {sound}")
 
+def small_fix():
+    conjugation_csv = "conjugations_to_anki.csv"
+    manager = CSVAttributeManager(conjugation_csv)
+
+    for verb in manager.elements:
+        for attribute in verbe_attribute:
+            text = manager.read_attribute(verb, attribute)
+            if "(e," in text:
+                manager.write_attribute(verb, f"{attribute}_audio", "")
+
+
 if __name__ == "__main__":
     main()
+    # small_fix()
+    examples = [
+        "j’avais joué",
+        "il/elle avait navigué",
+        "il/elle avait été aimé(e)",
+        "tu avais été aimé(e)",
+        "nous étions allé(e)s",
+        "qu’ils/elles eussentétéaimé(e)s",
+        "étant allé(e, s, es)",
+        "clos(e, es)",
+    ]
+    for example in examples:
+        print(split_3sp(example))
 
 """
 每个单词有 95 个变位，每个变位 2 秒钟，一共 190 秒，大约三四分钟能下载完一个单词的所有变位。
