@@ -459,7 +459,7 @@ class FrenchVerbExtractor:
                     for span in line["spans"]:
                         text = self.sustitude_illegal_str(span["text"]).strip()
                         if text:
-                            if abs(current_y_position - span["bbox"][1]) > 5:
+                            if abs(current_y_position - span["bbox"][1]) > 10:
                                 self.combine_repertoire_line(current_line, elements)
                                 current_line = []
                             current_line.append(TextElement(
@@ -722,7 +722,6 @@ class CSVAttributeManager:
         self._save_data()
 
 def main():
-    # 使用示例
     pdf_path = "bescherelle.pdf"
     output_csv = "french_verbs_conjugations.csv"
 
@@ -775,6 +774,18 @@ def main():
                 if verb_from_repertoire['notes']:
                     manager.write_attribute(element, 'notes', verb_from_repertoire['notes'])
 
+        # 统计基础动词变位的常用次数
+        # stat_dict = {}
+        # for i in range(105):
+        #     stat_dict[str(i + 1)] = 1
+
+        # for verb_from_repertoire in all_verbs:
+        #     if verb_from_repertoire['caracterisation']:
+        #         stat_dict[verb_from_repertoire['caracterisation']] += 1
+
+        # print(sorted(stat_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True))
+
+
 
         ##########################################################################
         # 上面完成了 PDF 相关的工作，接下来针对 CSV 进行补充调整
@@ -785,6 +796,26 @@ def main():
 
         # 获取发音并填充
 
+        # 其他修复
+        # all_verbs = extractor.extract_from_repertoire(start_page=188, end_page=256)
+        # conjugation_csv = "conjugations_to_anki.csv"
+        # conjugation_manager = CSVAttributeManager(conjugation_csv)
+
+        # cnt = 0
+        # for verb_from_repertoire in all_verbs:
+        #     element = verb_from_repertoire['verbe'].strip()
+        #     try:
+        #         indice_from_csv = conjugation_manager.read_attribute(element, 'indice')
+        #         # 能读到，说明是 105 个基础动词
+        #         # print(element)
+        #         # cnt += 1
+        #         conjugation_manager.write_attribute(element, 'labels', verb_from_repertoire['labels'])
+        #         conjugation_manager.write_attribute(element, 'notes', verb_from_repertoire['notes'])
+        #     except ValueError:
+        #         # 读不到，不是基础动词，跳过
+        #         continue
+        # print(cnt)
+
     except Exception as e:
         print(f"处理过程中出错: {e}")
 
@@ -792,10 +823,21 @@ if __name__ == "__main__":
     main()
 
 """
-记录：
+这个脚本现在不能处理好需要手工处理的：
 
-现在这个代码读写 csv 文件太慢了，跑一次要 20 分钟，感觉不是一个好办法。后面需要优化一下。
+- 105 个基础动词中唯一一个嘘音 h 因为在目录库中带 * 不能识别为同一个，需要手动让它带星，并更新 labels
+- 有一些指向 61/62 的目录库中的动词，算上它自己一共有两个，会被处理成上一个单词的 notes，需要手动删掉上一个单词的 notes 并再加一行
 
-现在整个 CSV 的框架就有了。再根据动词到网站上查询，并把这个作为核对的一部分。
-最后还要获取所有的发音。
+这些是空的，需要手动处理：
+【x】empty: verb = faillir, indice = 46, attr = conditionnel_present_3s
+【x】empty: verb = pouvoir, indice = 55, attr = participe_present
+【x】empty: verb = pouvoir, indice = 55, attr = participe_passe
+【x】empty: verb = échoir, indice = 67, attr = conditionnel_present_3s
+【x】empty: verb = échoir, indice = 67, attr = conditionnel_passe_3p
+【x】empty: verb = déchoir, indice = 68, attr = indicatif_futur_simple_3s
+【x】empty: verb = déchoir, indice = 68, attr = conditionnel_present_3s
+【x】empty: verb = déchoir, indice = 68, attr = conditionnel_passe_3p
+【x】empty: verb = déchoir, indice = 68, attr = participe_passe
+【x】empty: verb = clore, indice = 105, attr = participe_present
+【x】empty: verb = clore, indice = 105, attr = participe_passe
 """
