@@ -264,7 +264,9 @@ def split_3_person_to_two(str, split_sign):
 
 
 def split_3sp(combine_str):
-    combine_str = combine_str.replace("n.", "nous").replace("v.", "vous")
+    combine_str = combine_str.replace("n.", "nous").replace("v.", "vous")\
+        .replace("(e)(s)", "(e, s, es)").replace(" (u, ue, us, ues)", "(e, s, es)")\
+        .replace(" (é, ée, és, ées)", "(e, s, es)")
     if "ils/elles" in combine_str:
         return split_3_person_to_two(combine_str, "ils/elles")
     elif "il/elle" in combine_str:
@@ -327,12 +329,21 @@ if __name__ == "__main__":
         "il/elle avait été aimé(e)",
         "tu avais été aimé(e)",
         "nous étions allé(e)s",
-        "qu’ils/elles eussentétéaimé(e)s",
+        "qu’ils/elles eussent été aimé(e)s",
         "étant allé(e, s, es)",
         "clos(e, es)",
+        "il (elle) est venu(e)",
+        "ils (elles) ont écouté",
+        "ils (elles) s’en sont allé(e)s",
+        "nous étions venu(e)s",
+        "s’en étant allé(e)(s)",
+        "venu (u, ue, us, ues)",
+        "",
+        ""
     ]
     for example in examples:
-        print(split_3sp(example))
+        # print(split_3sp(example))
+        pass
 
 """
 每个单词有 95 个变位，每个变位 2 秒钟，一共 190 秒，大约三四分钟能下载完一个单词的所有变位。
