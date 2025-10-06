@@ -383,7 +383,9 @@ class FrenchVerbExtractor:
                 ("que je",       "1s"), ("que j’",   "1s"), ("que tu",   "2s"),
                 ("qu’il/elle",   "3s"), ("que nous", "1p"), ("que vous", "2p"),
                 ("qu’ils/elles", "3p"), ("que n.",   "1p"), ("que v.",   "2p"),
-                ("ils", "3p"), ("il", "3p"), ("qu’ils", "3p"), ("qu’il", "3p"),
+                ("ils (elles)",  "3p"), ("il (elle)", "3s"), ("qu’ils (elles)", "3p"),
+                ("qu’il (elle)", "3s"),
+                ("ils", "3p"), ("il", "3s"), ("qu’ils", "3p"), ("qu’il", "3s"),
             ]
             for pattern, person in person_patterns:
                 # print(f"pattern:{pattern}, person:{person}")
