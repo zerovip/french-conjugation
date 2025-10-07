@@ -423,6 +423,8 @@ def main(look_in_list):
     repertoire_manager = CSVAttributeManager(repertoire_csv)
 
     for verb, url in look_in_list.items():
+        if not verb:
+            continue
         if verb[0] == "h":
             try:
                 caracterisation = repertoire_manager.read_attribute(verb, "caracterisation")
@@ -443,7 +445,7 @@ def main(look_in_list):
                 .replace("û", "u").replace("ç", "c").replace("*", "").strip()
         try:
             caracterisation = conjugation_manager.read_attribute(verb, "caracterisation")
-            print(f"{verb} 可以在 conjugations_to_anki.csv 中读到，说明已经在 anki 列表中了，跳过")
+            print(f"=========={verb} 可以在 conjugations_to_anki.csv 中读到，说明已经在 anki 列表中了，跳过")
             continue
         except ValueError:
             # 这里才是预期
@@ -451,7 +453,7 @@ def main(look_in_list):
                 caracterisation = repertoire_manager.read_attribute(verb, "caracterisation")
                 notes = repertoire_manager.read_attribute(verb, "notes")
                 labels = repertoire_manager.read_attribute(verb, "labels")
-                print(f"{verb} 读到：caracterisation = {caracterisation}, notes = {notes}, labels = {labels}, url = {url}")
+                print(f"=========={verb} 读到：caracterisation = {caracterisation}, notes = {notes}, labels = {labels}, url = {url}")
                 conjugations = look_in_web(url)
                 if conjugations:
                     conjugation_manager.write_attribute(verb, "caracterisation", caracterisation)
@@ -462,7 +464,7 @@ def main(look_in_list):
                         conjugation_manager.write_attribute(verb, attr, value)
                     print(f"写入成功：{verb}")
             except ValueError:
-                print(f"{verb} 在 french_verbs_conjugations.csv 中读不到")
+                print(f"=========={verb} 在 french_verbs_conjugations.csv 中读不到")
                 # conjugations = look_in_web(url)
 
 def small_fix():
@@ -494,11 +496,21 @@ def small_fix():
 
 if __name__ == "__main__":
     look_in_list = {
-        "s’en aller": "https://conjugaison.bescherelle.com/verbes/sen-aller",
-        "venir": "",
-        "parler": "",
-        "écouter": "",
-        "dépêcher": "",
+        "rentrer": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
         # "répartir": "https://conjugaison.bescherelle.com/verbes/repartir-0",
         # "se manger": "https://conjugaison.bescherelle.com/verbes/se-manger",
     }
