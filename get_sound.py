@@ -201,6 +201,8 @@ def tts(text):
             return 1, None
     except requests.exceptions.RequestException as e:
         print(f"网络请求错误: {e}")
+        print("等待两分钟……")
+        sleep(120)
         return 1, None
     except ValueError as e:
         print(f"JSON解析错误: {e}")
