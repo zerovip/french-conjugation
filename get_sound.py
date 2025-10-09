@@ -4,6 +4,8 @@ import requests
 import json
 from urllib.parse import urlparse
 from time import sleep
+from gtts import gTTS, gTTSError
+import uuid
 
 class CSVAttributeManager:
     def __init__(self, csv_file):
@@ -147,6 +149,7 @@ class CSVAttributeManager:
                 del self.data[element][attribute]
         self._save_data()
 
+
 def download_file(url, save_path):
     try:
         # Send GET request to the URL
@@ -165,6 +168,19 @@ def download_file(url, save_path):
     except Exception as e:
         print(f"Error: {e}")
         return 1
+
+def gtts(text):
+    try:
+        tts = gTTS(text, lang='fr')
+        file_name = f"{str(uuid.uuid1())}.mp3"
+        tts.save(f'sound_download_g/fr-conj-{file_name}')
+        print(f"gTTS File downloaded successfully: {file_name}")
+        return 0, file_name
+    except gTTSError as e:
+        print(f"gTTS error: {e}")
+        sleep(10)
+        return 1, None
+
 
 def tts(text):
     url = "https://api.soundoftext.com/sounds"
@@ -302,7 +318,7 @@ def main():
             text = manager.read_attribute(verb, attribute)
             sound = manager.read_attribute(verb, f"{attribute}_audio")
             if text and not sound:
-                ret, path = tts(split_3sp(text))
+                ret, path = gtts(split_3sp(text))
                 if ret == 0 and path:
                     path = path.replace("/", "")
                     manager.write_attribute(verb, f"{attribute}_audio", f"[sound:fr-conj-{path}]")
