@@ -442,10 +442,10 @@ def main(look_in_list):
                 .replace("â", "a").replace("ä", "a").replace("à", "a")\
                 .replace("é", "e").replace("è", "e").replace("ê", "e").replace("ë", "e")\
                 .replace("î", "i").replace("ï", "i").replace("ô", "i").replace("ö", "i")\
-                .replace("û", "u").replace("ç", "c").replace("*", "").strip()
+                .replace("û", "u").replace("ç", "c").replace("*", "").replace(" ", "")
         try:
             caracterisation = conjugation_manager.read_attribute(verb, "caracterisation")
-            print(f"=========={verb} 可以在 conjugations_to_anki.csv 中读到，说明已经在 anki 列表中了，跳过")
+            print(f"~~~~~~~~~~{verb} 可以在 conjugations_to_anki.csv 中读到，说明已经在 anki 列表中了，跳过")
             continue
         except ValueError:
             # 这里才是预期
@@ -464,7 +464,7 @@ def main(look_in_list):
                         conjugation_manager.write_attribute(verb, attr, value)
                     print(f"写入成功：{verb}")
             except ValueError:
-                print(f"=========={verb} 在 french_verbs_conjugations.csv 中读不到")
+                print(f"----------{verb} 在 french_verbs_conjugations.csv 中读不到")
                 # conjugations = look_in_web(url)
 
 def small_fix():
@@ -492,7 +492,6 @@ def small_fix():
             continue
         else:
             print(verb)
-
 
 if __name__ == "__main__":
     look_in_list = {
